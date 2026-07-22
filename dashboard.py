@@ -1,7 +1,7 @@
 """Flask monitoring dashboard with APScheduler and secure bot trigger."""
 
 from __future__ import annotations
-
+from bot import execute
 import threading
 from datetime import datetime, timezone
 
@@ -282,7 +282,13 @@ def start_scheduler() -> BackgroundScheduler:
 db.init_db()
 _scheduler = start_scheduler()
 db.log_event("INFO", "Dashboard started with 15-minute scheduler")
-
+@app.route('/run-bot-geheim-123')
+def webhook_run():
+    # Start de bot in een losse thread zodat de webserver direct 'OK' antwoordt
+    # Dit voorkomt de 502 Bad Gateway / Timeout meldingen op Render!
+    thread = threading.Thread(target=execute)
+    thread.start()
+    return "Bot is succesvol getriggerd via webhook!", 200
 if __name__ == "__main__":
     # Dit voert alleen uit als je 'python dashboard.py' handmatig typt:
     app.run(host=config.FLASK_HOST, port=config.FLASK_PORT, debug=False, use_reloader=False)
