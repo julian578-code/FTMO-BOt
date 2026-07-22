@@ -278,8 +278,11 @@ def start_scheduler() -> BackgroundScheduler:
     return scheduler
 
 
+# Dit voert nu áltijd uit (zowel op je Mac als op Render met Gunicorn):
+db.init_db()
+_scheduler = start_scheduler()
+db.log_event("INFO", "Dashboard started with 15-minute scheduler")
+
 if __name__ == "__main__":
-    db.init_db()
-    _scheduler = start_scheduler()
-    db.log_event("INFO", "Dashboard started with 15-minute scheduler")
+    # Dit voert alleen uit als je 'python dashboard.py' handmatig typt:
     app.run(host=config.FLASK_HOST, port=config.FLASK_PORT, debug=False, use_reloader=False)
