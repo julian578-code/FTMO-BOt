@@ -623,9 +623,7 @@ def export_static_dashboard() -> None:
 </body>
 </html>"""
 
-        import os
-        os.makedirs("docs", exist_ok=True)
-        with open("docs/index.html", "w", encoding="utf-8") as f:
+        with open("index.html", "w", encoding="utf-8") as f:
             f.write(html_content)
 
     except Exception as e:

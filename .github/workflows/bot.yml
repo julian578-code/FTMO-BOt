@@ -1,43 +1,29 @@
 name: Run Trading Bot
-
-on:
+on:  
   workflow_dispatch:
-
-jobs:
-  run-bot:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: Run Bot Logic
-        env:
-          TIINGO_SECRET: ${{ secrets.TIINGO_SECRET }}
-        run: |
-          python -c "import bot; bot.execute()"
-
-      - name: Generate Static Dashboard
-        run: |
-          python generate_dashboard.py
-
-      - name: Commit en push wijzigingen
-        run: |
-            git config --local user.email "action@github.com"
-            git config --local user.name "GitHub Action"
-            git add trading_bot.db  # (of de naam van je dashboard-bestand)
-            git commit -m "Auto-update data" || exit 0
-            git push
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-git add .
+jobs:  
+  run-bot:    
+    runs-on: ubuntu-latest    
+    steps:      
+      - name: Checkout repository        
+        uses: actions/checkout@v4      
+      - name: Set up Python        
+        uses: actions/setup-python@v5        
+        with:          
+          python-version: '3.10'      
+      - name: Install dependencies        
+        run: |          
+          python -m pip install --upgrade pip          
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi      
+      - name: Run Bot Logic        
+        env:          
+          TIINGO_SECRET: ${{ secrets.TIINGO_SECRET }}        
+        run: |          
+          python -c "import bot; bot.execute()"      
+      - name: Commit and push changes        
+        run: |            
+          git config --global user.name "github-actions[bot]"            
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"            
+          git add .            
+          git commit -m "Update database en dashboard" || exit 0            
+          git push
