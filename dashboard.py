@@ -4,7 +4,7 @@ from __future__ import annotations
 from bot import execute
 import threading
 from datetime import datetime, timezone
-
+import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask, Response, request
@@ -292,3 +292,10 @@ def webhook_run():
 if __name__ == "__main__":
     # Dit voert alleen uit als je 'python dashboard.py' handmatig typt:
     app.run(host=config.FLASK_HOST, port=config.FLASK_PORT, debug=False, use_reloader=False)
+
+    if __name__ == '__main__':
+    # Render geeft automatisch een POORT mee via omgevingsvariabelen
+    port = int(os.environ.get("PORT", 5000))
+    
+    # Let op: host MOET '0.0.0.0' zijn!
+    app.run(host='0.0.0.0', port=port)
