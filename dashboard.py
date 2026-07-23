@@ -1,7 +1,6 @@
 """Flask monitoring dashboard with APScheduler and secure bot trigger."""
 
 from __future__ import annotations
-from bot import execute
 import threading
 from datetime import datetime, timezone
 import os
@@ -254,10 +253,11 @@ def index() -> str:
     return _render_dashboard()
 
 
-@app.route("/trigger-bot-logic", methods=["POST"])
+@app.route("/trigger-bot-logic", methods=["GET", "POST"])
 def trigger_bot_logic() -> tuple[Response, int]:
-    trigger_key = request.headers.get("X-Trigger-Key", "")
-    if not config.TRIGGER_SECRET or trigger_key != config.TRIGGER_SECRET:
+    # Controleer de trigger sleutel via Header of URL parameter
+    trigger_key = request.headers.get("X-Trigger-Key") or request.args.get("key", "")
+    if config.TRIGGER_SECRET and trigger_key != config.TRIGGER_SECRET:
         return Response("Unauthorized", status=401)
 
     thread = threading.Thread(target=_run_bot_safe, daemon=True)
@@ -278,20 +278,11 @@ def start_scheduler() -> BackgroundScheduler:
     return scheduler
 
 
-# Dit voert nu áltijd uit (zowel op je Mac als op Render met Gunicorn):
+# Initialisatie bij opstarten
 db.init_db()
 _scheduler = start_scheduler()
 db.log_event("INFO", "Dashboard started with 15-minute scheduler")
-@app.route('/run-bot-geheim-123')
-def webhook_run():
-    # Start de bot in een losse thread zodat de webserver direct 'OK' antwoordt
-    # Dit voorkomt de 502 Bad Gateway / Timeout meldingen op Render!
-    thread = threading.Thread(target=execute)
-    thread.start()
-    return "Bot is succesvol getriggerd via webhook!", 200
 
-if __name__ == '__main__':
-    # Render geeft de poort door via een omgevingsvariabele
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
-    # Start direct op 0.0.0.0 zodat Render hem ziet
-    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
