@@ -2,15 +2,12 @@ name: Run Trading Bot
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Draait elke 15 minuten automatisch
-  workflow_dispatch: # Zodat je de bot ook handmatig kunt starten vanuit GitHub
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # Nodig om de bijgewerkte database terug te kunnen pushen
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,28 +16,26 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-      - name: Run trading bot
+      - name: Run Bot Logic
         env:
           TIINGO_SECRET: ${{ secrets.TIINGO_SECRET }}
         run: |
-          python -c "from bot import execute; execute()"
+          python -c "import bot; bot.execute()"
 
-      - name: Commit and push updated database
+      - name: Generate Static Dashboard
         run: |
-          git config --global user.name "GitHub Actions Bot"
-          git config --global user.email "actions@github.com"
-          git add *.db || true
-          git commit -m "Auto-update database from trading bot [skip ci]" || echo "No changes to commit"
+          python generate_dashboard.py
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add trading_bot.db index.html
+          git commit -m "Auto-update database and static dashboard" || echo "No changes to commit"
           git push
-
-      - name: Trigger Render Deploy (Refresh Dashboard)
-        if: success()
-        run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
