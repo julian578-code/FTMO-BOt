@@ -31,9 +31,9 @@ jobs:
           python generate_dashboard.py
 
       - name: Commit and push changes
-        run: |
-          git config --global user.name 'github-actions[bot]'
-          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
-          git add trading_bot.db index.html
-          git commit -m "Auto-update database and static dashboard" || echo "No changes to commit"
-          git push
+          run: |
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/ || true
+            git commit -m "Update static dashboard" || exit 0
+            git push
