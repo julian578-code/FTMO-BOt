@@ -289,15 +289,9 @@ def webhook_run():
     thread = threading.Thread(target=execute)
     thread.start()
     return "Bot is succesvol getriggerd via webhook!", 200
-if __name__ == "__main__":
-    # Dit voert alleen uit als je 'python dashboard.py' handmatig typt:
-    app.run(host=config.FLASK_HOST, port=config.FLASK_PORT, debug=False, use_reloader=False)
 
-    if __name__ == '__main__':
-        port = int(os.environ.get("PORT", 5000))
-    
-
-        if hasattr(app, 'run_server'):
-            app.run_server(host='0.0.0.0', port=port, debug=False)
-        else:
-            app.run(host='0.0.0.0', port=port)
+if __name__ == '__main__':
+    # Render geeft de poort door via een omgevingsvariabele
+    port = int(os.environ.get("PORT", 5000))
+    # Start direct op 0.0.0.0 zodat Render hem ziet
+    app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
