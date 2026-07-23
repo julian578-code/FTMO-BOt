@@ -54,23 +54,26 @@ def _is_us_dst(dt_utc: datetime) -> bool:
 
 
 def is_weekend_mode(now_utc: datetime | None = None) -> bool:
-    """True between Friday close cutoff and Sunday FX open."""
+    """True from Friday's configured cutoff until Sunday FX open."""
     now = now_utc or datetime.now(timezone.utc)
-    weekday = now.weekday()  # Mon=0 .. Sun=6
+    weekday = now.weekday()  # Monday=0, Friday=4, Saturday=5, Sunday=6
 
-    if weekday == 6:
-        ny = now.astimezone(config.NY_TZ)
-        sunday_open = ny.replace(
-            hour=config.SUNDAY_OPEN_HOUR_NY, minute=0, second=0, microsecond=0
-        )
-        return now < sunday_open.astimezone(timezone.utc)
-
-    if weekday == 5:
+    if weekday == 4:  # Friday
         close_hour = (
-            config.FRIDAY_CLOSE_UTC_DST if _is_us_dst(now) else config.FRIDAY_CLOSE_UTC_STANDARD
+            config.FRIDAY_CLOSE_UTC_DST
+            if _is_us_dst(now)
+            else config.FRIDAY_CLOSE_UTC_STANDARD
         )
-        friday_close = now.replace(hour=close_hour, minute=0, second=0, microsecond=0)
-        return now >= friday_close
+        cutoff = now.replace(hour=close_hour, minute=0, second=0, microsecond=0)
+        return now >= cutoff
+
+    if weekday == 5:  # Saturday
+        return True
+
+    if weekday == 6:  # Sunday
+        ny = now.astimezone(config.NY_TZ)
+        market_open = ny.replace(hour=config.SUNDAY_OPEN_HOUR_NY, minute=0, second=0, microsecond=0)
+        return now < market_open.astimezone(timezone.utc)
 
     return False
 
@@ -543,12 +546,15 @@ def get_portfolio_metrics() -> dict[str, Any]:
     }
 
 
-def execute() -> None:
+def execute():
     """Main bot execution pipeline — called every 15 minutes."""
     now_utc = datetime.now(timezone.utc)
     today = now_utc.strftime("%Y-%m-%d")
 
     try:
+        # Zorgt ervoor dat de tabellen altijd bestaan voordat we data ophalen
+        db.init_db()  # <--- DEZE REGEL IS TOEGEVOEGD!
+
         daily = db.get_or_create_daily_balance(today)
         state = db.get_bot_state()
 
