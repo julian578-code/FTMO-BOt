@@ -6,6 +6,7 @@ import time
 import traceback
 from datetime import datetime, timedelta, timezone
 from typing import Any
+import os
 
 import pandas as pd
 import requests
@@ -546,14 +547,98 @@ def get_portfolio_metrics() -> dict[str, Any]:
     }
 
 
+def export_static_dashboard() -> None:
+    """Genereert een statische docs/index.html voor GitHub Pages."""
+    try:
+        metrics = get_portfolio_metrics()
+        trades = db.get_recent_trades(10)
+        state = metrics["operational_state"]
+
+        trade_rows = ""
+        if trades:
+            for t in trades:
+                exit_p = f"{t['exit_price']:.5f}" if t["exit_price"] else "—"
+                pips = f"{t['pips_realized']:.1f}" if t["pips_realized"] is not None else "—"
+                net = f"${t['net_profit']:,.2f}" if t["net_profit"] is not None else "—"
+                close_t = t["close_time_utc"] or "—"
+                trade_rows += f"""
+                <tr>
+                    <td>{t['trade_id']}</td>
+                    <td>{t['asset']}</td>
+                    <td class="dir-{t['direction'].lower()}">{t['direction']}</td>
+                    <td>{t['entry_price']:.5f}</td>
+                    <td>{exit_p}</td>
+                    <td>{pips}</td>
+                    <td>{net}</td>
+                    <td>{t['status']}</td>
+                    <td>{t['open_time_utc']}</td>
+                    <td>{close_t}</td>
+                </tr>"""
+        else:
+            trade_rows = '<tr><td colspan="10" style="text-align:center; padding:2rem; color:#8b949e;">No trades yet</td></tr>'
+
+        open_ind = "Yes" if metrics["open_trade"] else "No"
+        last_exec = metrics["last_execution_utc"] or "Never"
+        pf = metrics["profit_factor"]
+        pf_disp = f"{pf:.2f}" if pf != float("inf") else "∞"
+
+        html_content = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTMO Paper Trading Bot</title>
+    <style>
+        body {{ font-family: -apple-system, sans-serif; background: #0d1117; color: #e6edf3; padding: 2rem; }}
+        .header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }}
+        .metrics {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }}
+        .card {{ background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; }}
+        .label {{ font-size: 0.75rem; color: #8b949e; text-transform: uppercase; }}
+        .val {{ font-size: 1.4rem; font-weight: bold; margin-top: 0.25rem; }}
+        table {{ width: 100%; border-collapse: collapse; background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }}
+        th, td {{ padding: 0.75rem; text-align: left; border-bottom: 1px solid #30363d; font-size: 0.85rem; }}
+        th {{ background: #1c2128; color: #8b949e; font-size: 0.7rem; text-transform: uppercase; }}
+        .dir-long {{ color: #3fb950; font-weight: bold; }}
+        .dir-short {{ color: #f85149; font-weight: bold; }}
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FTMO Paper Trading Bot</h1>
+        <span style="background:#1c2128; padding:0.4rem 0.8rem; border-radius:20px; font-size:0.8rem;">{state}</span>
+    </div>
+    <div class="metrics">
+        <div class="card"><div class="label">Simulated Balance</div><div class="val" style="color:#3fb950;">${metrics['balance']:,.2f}</div></div>
+        <div class="card"><div class="label">Win Rate</div><div class="val">{metrics['win_rate']:.1f}%</div></div>
+        <div class="card"><div class="label">Profit Factor</div><div class="val">{pf_disp}</div></div>
+        <div class="card"><div class="label">Open Trade</div><div class="val">{open_ind}</div></div>
+        <div class="card"><div class="label">Total Trades</div><div class="val">{metrics['total_trades']}</div></div>
+    </div>
+    <h2>Recent Trades</h2>
+    <table>
+        <thead><tr><th>ID</th><th>Asset</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Net P&amp;L</th><th>Status</th><th>Opened</th><th>Closed</th></tr></thead>
+        <tbody>{trade_rows}</tbody>
+    </table>
+    <p style="margin-top:2rem; font-size:0.8rem; color:#8b949e;">Last execution: {last_exec} UTC</p>
+</body>
+</html>"""
+
+        import os
+        os.makedirs("docs", exist_ok=True)
+        with open("docs/index.html", "w", encoding="utf-8") as f:
+            f.write(html_content)
+
+    except Exception as e:
+        db.log_event("ERROR", f"Failed to export dashboard: {e}")
+
+
 def execute():
     """Main bot execution pipeline — called every 15 minutes."""
     now_utc = datetime.now(timezone.utc)
     today = now_utc.strftime("%Y-%m-%d")
 
     try:
-        # Zorgt ervoor dat de tabellen altijd bestaan voordat we data ophalen
-        db.init_db()  # <--- DEZE REGEL IS TOEGEVOEGD!
+        db.init_db()
 
         daily = db.get_or_create_daily_balance(today)
         state = db.get_bot_state()
@@ -567,14 +652,17 @@ def execute():
                 operational_state=config.STATE_HALTED,
                 last_execution_utc=to_iso_utc(now_utc),
             )
+            export_static_dashboard()
             return
 
         if apply_weekend_guard(now_utc):
             db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
+            export_static_dashboard()
             return
 
         if apply_daily_guard(daily, now_utc):
             db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
+            export_static_dashboard()
             return
 
         sync_candles()
@@ -586,6 +674,7 @@ def execute():
                 f"Insufficient candles ({len(df)}/{config.WARMUP_CANDLES}); waiting for warm-up",
             )
             db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
+            export_static_dashboard()
             return
 
         closed_open = latest_closed_candle_open(now_utc)
@@ -594,6 +683,7 @@ def execute():
         last_evaluated = state.get("last_evaluated_candle_utc")
         if last_evaluated and closed_iso <= last_evaluated:
             db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
+            export_static_dashboard()
             return
 
         indicators = compute_indicators(df)
@@ -602,6 +692,7 @@ def execute():
         closed_df = indicators.loc[closed_mask]
         if closed_df.empty:
             db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
+            export_static_dashboard()
             return
 
         signal_idx = closed_df.index[-1]
@@ -664,6 +755,10 @@ def execute():
         equity = db.get_current_equity()
         db.update_daily_equity(today, equity)
 
+        # Genereer altijd het dashboard op het einde!
+        export_static_dashboard()
+
     except Exception as exc:
         db.log_event("ERROR", f"execute() failed: {exc}", exc)
         db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
+        export_static_dashboard()
