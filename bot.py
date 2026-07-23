@@ -760,6 +760,3 @@ def execute():
         db.log_event("ERROR", f"execute() failed: {exc}", exc)
         db.update_bot_state(last_execution_utc=to_iso_utc(now_utc))
         export_static_dashboard()
-
-from generate_dashboard import update_dashboard
-update_dashboard()
