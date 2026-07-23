@@ -115,33 +115,33 @@
 <body>
     <div class="header">
         <h1>FTMO Paper Trading Bot</h1>
-        <span class="badge badge-long">LONG LOOKOUT</span>
+        <span class="badge {{ badge_class if badge_class else 'badge-long' }}">{{ badge_text if badge_text else 'LONG LOOKOUT' }}</span>
     </div>
 
     <div class="metrics">
         <div class="metric-card">
             <div class="metric-label">Simulated Balance</div>
-            <div class="metric-value positive">$100,000.00</div>
+            <div class="metric-value positive">${{ balance if balance else '100,000.00' }}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Win Rate</div>
-            <div class="metric-value">0.0%</div>
+            <div class="metric-value">{{ win_rate if win_rate else '0.0' }}%</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Profit Factor</div>
-            <div class="metric-value">0.00</div>
+            <div class="metric-value">{{ profit_factor if profit_factor else '0.00' }}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Open Trade</div>
-            <div class="metric-value">No</div>
+            <div class="metric-value">{{ open_trade if open_trade else 'No' }}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Total Trades</div>
-            <div class="metric-value">0</div>
+            <div class="metric-value">{{ total_trades if total_trades else '0' }}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Active Risk</div>
-            <div class="metric-value">1.0%</div>
+            <div class="metric-value">{{ active_risk if active_risk else '1.0' }}%</div>
         </div>
     </div>
 
@@ -162,12 +162,29 @@
             </tr>
         </thead>
         <tbody>
-            <tr><td colspan="10" class="empty">No trades yet</td></tr>
+            {% if trades %}
+                {% for trade in trades %}
+                <tr>
+                    <td>{{ trade.id }}</td>
+                    <td>{{ trade.asset }}</td>
+                    <td class="{{ 'dir-long' if trade.dir == 'LONG' else 'dir-short' }}">{{ trade.dir }}</td>
+                    <td>{{ trade.entry }}</td>
+                    <td>{{ trade.exit if trade.exit else '-' }}</td>
+                    <td>{{ trade.pips if trade.pips else '-' }}</td>
+                    <td>${{ trade.pnl if trade.pnl else '0.00' }}</td>
+                    <td>{{ trade.status }}</td>
+                    <td>{{ trade.opened }}</td>
+                    <td>{{ trade.closed if trade.closed else '-' }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr><td colspan="10" class="empty">No trades yet</td></tr>
+            {% endif %}
         </tbody>
     </table>
 
     <div class="footer">
-        <p>Last execution: 2026-07-23T16:01:04Z UTC &middot; Auto-refresh every 30s &middot; Bot runs every 15 min</p>
+        <p>Last execution: {{ last_execution }} &middot; Auto-refresh every 30s &middot; Bot runs every 15 min</p>
     </div>
 </body>
 </html>
