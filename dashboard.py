@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
     if __name__ == '__main__':
     # Render geeft automatisch een POORT mee via omgevingsvariabelen
-    port = int(os.environ.get("PORT", 5000))
+        port = int(os.environ.get("PORT", 5000))
     
     # Let op: host MOET '0.0.0.0' zijn!
-    app.run(host='0.0.0.0', port=port)
+        app.run(host='0.0.0.0', port=port)
