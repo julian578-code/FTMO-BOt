@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FTMO Paper Trading Bot</title>
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #0d1117; color: #e6edf3; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; }
+        .label { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; }
+        .val { font-size: 1.4rem; font-weight: bold; margin-top: 0.25rem; }
+        table { width: 100%; border-collapse: collapse; background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #30363d; font-size: 0.85rem; }
+        th { background: #1c2128; color: #8b949e; font-size: 0.7rem; text-transform: uppercase; }
+        .dir-long { color: #3fb950; font-weight: bold; }
+        .dir-short { color: #f85149; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>FTMO Paper Trading Bot</h1>
+        <span style="background:#1c2128; padding:0.4rem 0.8rem; border-radius:20px; font-size:0.8rem;">LONG_LOOKOUT</span>
+    </div>
+    <div class="metrics">
+        <div class="card"><div class="label">Simulated Balance</div><div class="val" style="color:#3fb950;">$100,000.00</div></div>
+        <div class="card"><div class="label">Win Rate</div><div class="val">0.0%</div></div>
+        <div class="card"><div class="label">Profit Factor</div><div class="val">0.00</div></div>
+        <div class="card"><div class="label">Open Trade</div><div class="val">No</div></div>
+        <div class="card"><div class="label">Total Trades</div><div class="val">0</div></div>
+    </div>
+    <h2>Recent Trades</h2>
+    <table>
+        <thead><tr><th>ID</th><th>Asset</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Net P&amp;L</th><th>Status</th><th>Opened</th><th>Closed</th></tr></thead>
+        <tbody><tr><td colspan="10" style="text-align:center; padding:2rem; color:#8b949e;">No trades yet</td></tr></tbody>
+    </table>
+    <p style="margin-top:2rem; font-size:0.8rem; color:#8b949e;">Last execution: 2026-07-23T17:30:54Z UTC</p>
+</body>
+</html>
