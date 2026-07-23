@@ -294,8 +294,10 @@ if __name__ == "__main__":
     app.run(host=config.FLASK_HOST, port=config.FLASK_PORT, debug=False, use_reloader=False)
 
     if __name__ == '__main__':
-    # Render geeft automatisch een POORT mee via omgevingsvariabelen
         port = int(os.environ.get("PORT", 5000))
     
-    # Let op: host MOET '0.0.0.0' zijn!
+
+        if hasattr(app, 'run_server'):
+            app.run_server(host='0.0.0.0', port=port, debug=False)
+        else:
         app.run(host='0.0.0.0', port=port)
