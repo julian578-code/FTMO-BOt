@@ -3,188 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="30">
     <title>FTMO Paper Trading Bot</title>
     <style>
-        :root {
-            --bg: #0d1117;
-            --surface: #161b22;
-            --border: #30363d;
-            --text: #e6edf3;
-            --muted: #8b949e;
-            --accent: #58a6ff;
-            --green: #3fb950;
-            --red: #f85149;
-            --orange: #d29922;
-            --purple: #bc8cff;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.5;
-            padding: 2rem;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        h1 { font-size: 1.5rem; font-weight: 600; }
-        .badge {
-            display: inline-block;
-            padding: 0.35rem 0.85rem;
-            border-radius: 2rem;
-            font-size: 0.8rem;
-            font-weight: 600;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-        }
-        .badge-long { background: #1a3a2a; color: var(--green); }
-        .badge-short { background: #3a1a1a; color: var(--red); }
-        .badge-weekend { background: #2a2a1a; color: var(--orange); }
-        .badge-halted { background: #3a1a2a; color: var(--purple); }
-        .badge-default { background: var(--surface); color: var(--muted); }
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-        .metric-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1.25rem;
-        }
-        .metric-label {
-            font-size: 0.75rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 0.25rem;
-        }
-        .metric-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-        }
-        .metric-value.positive { color: var(--green); }
-        .section-title {
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-            color: var(--muted);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 0.65rem 0.85rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-            font-size: 0.85rem;
-        }
-        th {
-            background: #1c2128;
-            color: var(--muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.7rem;
-            letter-spacing: 0.05em;
-        }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #1c2128; }
-        .dir-long { color: var(--green); font-weight: 600; }
-        .dir-short { color: var(--red); font-weight: 600; }
-        .empty { text-align: center; color: var(--muted); padding: 2rem; }
-        .footer {
-            margin-top: 2rem;
-            color: var(--muted);
-            font-size: 0.8rem;
-        }
+        body { font-family: -apple-system, sans-serif; background: #0d1117; color: #e6edf3; padding: 2rem; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 1rem; }
+        .label { font-size: 0.75rem; color: #8b949e; text-transform: uppercase; }
+        .val { font-size: 1.4rem; font-weight: bold; margin-top: 0.25rem; }
+        table { width: 100%; border-collapse: collapse; background: #161b22; border: 1px solid #30363d; border-radius: 8px; overflow: hidden; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #30363d; font-size: 0.85rem; }
+        th { background: #1c2128; color: #8b949e; font-size: 0.7rem; text-transform: uppercase; }
+        .dir-long { color: #3fb950; font-weight: bold; }
+        .dir-short { color: #f85149; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>FTMO Paper Trading Bot</h1>
-        <span class="badge {{ badge_class if badge_class else 'badge-long' }}">{{ badge_text if badge_text else 'LONG LOOKOUT' }}</span>
+        <span style="background:#1c2128; padding:0.4rem 0.8rem; border-radius:20px; font-size:0.8rem;">LONG_LOOKOUT</span>
     </div>
-
     <div class="metrics">
-        <div class="metric-card">
-            <div class="metric-label">Simulated Balance</div>
-            <div class="metric-value positive">${{ balance if balance else '100,000.00' }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Win Rate</div>
-            <div class="metric-value">{{ win_rate if win_rate else '0.0' }}%</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Profit Factor</div>
-            <div class="metric-value">{{ profit_factor if profit_factor else '0.00' }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Open Trade</div>
-            <div class="metric-value">{{ open_trade if open_trade else 'No' }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Total Trades</div>
-            <div class="metric-value">{{ total_trades if total_trades else '0' }}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Active Risk</div>
-            <div class="metric-value">{{ active_risk if active_risk else '1.0' }}%</div>
-        </div>
+        <div class="card"><div class="label">Simulated Balance</div><div class="val" style="color:#3fb950;">$100,000.00</div></div>
+        <div class="card"><div class="label">Win Rate</div><div class="val">0.0%</div></div>
+        <div class="card"><div class="label">Profit Factor</div><div class="val">0.00</div></div>
+        <div class="card"><div class="label">Open Trade</div><div class="val">No</div></div>
+        <div class="card"><div class="label">Total Trades</div><div class="val">0</div></div>
     </div>
-
-    <h2 class="section-title">Recent Trades</h2>
+    <h2>Recent Trades</h2>
     <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Asset</th>
-                <th>Dir</th>
-                <th>Entry</th>
-                <th>Exit</th>
-                <th>Pips</th>
-                <th>Net P&amp;L</th>
-                <th>Status</th>
-                <th>Opened</th>
-                <th>Closed</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if trades %}
-                {% for trade in trades %}
-                <tr>
-                    <td>{{ trade.id }}</td>
-                    <td>{{ trade.asset }}</td>
-                    <td class="{{ 'dir-long' if trade.dir == 'LONG' else 'dir-short' }}">{{ trade.dir }}</td>
-                    <td>{{ trade.entry }}</td>
-                    <td>{{ trade.exit if trade.exit else '-' }}</td>
-                    <td>{{ trade.pips if trade.pips else '-' }}</td>
-                    <td>${{ trade.pnl if trade.pnl else '0.00' }}</td>
-                    <td>{{ trade.status }}</td>
-                    <td>{{ trade.opened }}</td>
-                    <td>{{ trade.closed if trade.closed else '-' }}</td>
-                </tr>
-                {% endfor %}
-            {% else %}
-                <tr><td colspan="10" class="empty">No trades yet</td></tr>
-            {% endif %}
-        </tbody>
+        <thead><tr><th>ID</th><th>Asset</th><th>Dir</th><th>Entry</th><th>Exit</th><th>Pips</th><th>Net P&amp;L</th><th>Status</th><th>Opened</th><th>Closed</th></tr></thead>
+        <tbody><tr><td colspan="10" style="text-align:center; padding:2rem; color:#8b949e;">No trades yet</td></tr></tbody>
     </table>
-
-    <div class="footer">
-        <p>Last execution: {{ last_execution }} &middot; Auto-refresh every 30s &middot; Bot runs every 15 min</p>
-    </div>
+    <p style="margin-top:2rem; font-size:0.8rem; color:#8b949e;">Last execution: 2026-07-23T22:04:18Z UTC</p>
 </body>
 </html>
